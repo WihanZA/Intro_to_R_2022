@@ -1,0 +1,197 @@
+---
+title: Introduction to R
+subtitle: Intensive Statistics Course
+author:
+  name: Wihan Marais
+  affiliation: wihanmarais@sun.ac.za
+date: "25 January 2022" ## Or "Lecture no."
+output: 
+  # html_document:
+  #   keep_md: false
+  #   theme: journal
+  #   highlight: haddock
+  #   # code_folding: show
+  #   toc: yes
+  #   toc_depth: 4
+  #   toc_float: yes
+  #   css: css/preamble.css ## For multi-col environments
+  pdf_document:
+    latex_engine: xelatex
+    keep_tex: false ## Change to true if want keep intermediate .tex file
+    toc: true
+    toc_depth: 3
+    dev: cairo_pdf
+    # fig_width: 7 ## Optional: Set default PDF figure width
+    # fig_height: 6 ## Optional: Set default PDF figure height
+    extra_dependencies: ['booktabs', 'threeparttable', 'float'] # "longtable"
+    includes:
+      in_header: tex/preamble.tex ## For multi-col environments
+    pandoc_args:
+        --template=tex/mytemplate.tex ## For affiliation field. See: https://bit.ly/2T191uZ
+always_allow_html: true
+header-includes:
+- \usepackage{siunitx}
+- \usepackage{graphicx}
+
+urlcolor: blue
+# mainfont: Cochineal
+# sansfont: Fira Sans
+# monofont: Fira Code
+## Although, see: https://tex.stackexchange.com/q/294362
+## Automatically knit to both formats:
+knit: (function(inputFile, encoding) {
+ rmarkdown::render(inputFile, encoding = encoding, 
+ output_format = 'all') 
+ })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warning = FALSE)
+```
+
+\graphicspath{ {./images/} }
+
+## Why R?
+
+\begin{enumerate}
+\item R is free and open-source.
+\begin{itemize}
+\item At the time of writing, a new \href{https://www.quantec.co.za/store/}{Stata 17 annual license} is priced between R11,670 and R21,280 excluding VAT.
+\item Free upgrades, updates and dissemination.
+\item Availability of helpful resources like \textbf{\href{https://stackoverflow.com/}{stackoverflow}} and \textbf{\href{https://www.statmethods.net/}{Quick-R}}.
+\end{itemize}
+\item R uses \textbf{packages}
+\begin{itemize}
+\item R consists of Base-R coupled with third-party libraries of pre-written code, or packages.
+\item \textbf{CRAN}, or The Comprehensive R Archive Network, is a network of ftp (file transfer protocol) and web servers around the world that store identical, up-to-date, versions of code and documentation for R.
+\item More on this later.
+\end{itemize}
+\item R uses predictive coding (Ctrl/Cmd + Space is very useful).
+
+
+\includegraphics[width=\textwidth]{pred_text}
+\item R is compatible with Markdown.
+\begin{itemize}
+\item These lecture notes were created as a `.Rmd` file using \textbf{R Markdown}, RStudio's native authoring framework for data science.
+\item See this \href{https://rmarkdown.rstudio.com/lesson-1.html}{1-minute video summary of what R Markdown entails.}
+\end{itemize}
+\end{enumerate}
+
+## Before we start
+
+You need the following installed on your machine:
+\begin{itemize}
+\item \textbf{\href{https://cran.r-project.org/}{R}} or Base-R.
+
+"R is a freely available language and environment for statistical computing and graphics which provides a wide variety of statistical and graphical techniques: linear and nonlinear modelling, statistical tests, time series analysis, classification, clustering, etc."
+
+\item \textbf{\href{https://www.rstudio.com/}{RStudio}}
+
+"RStudio is an integrated development environment (IDE) for R. It includes a console, syntax-highlighting editor that supports direct code execution, as well as tools for plotting, history, debugging and workspace management."
+
+\item \textbf{\href{https://cran.r-project.org/bin/windows/Rtools/rtools40.html}{Rtools}}
+
+Select the Rtools download link for the relevant version of R installed on your machine. To determine the version currently installed, run the following code in your console. First, highlight the line of code you would like to run and Ctrl/Cmd + Enter to run.
+\end{itemize}
+
+```{r rversion, eval=FALSE}
+sessionInfo()[1]$R.version$version.string
+
+# IMPORTANT:
+# Take care to check the box to have the installer 'edit your path'
+```
+
+To verify that we have installed Rtools properly, we need to make use of the \verb|devtools| package.
+
+```{r devtools, eval = F}
+install.packages("devtools") # install the package from CRAN
+library(devtools) # initialize package into your current library
+
+find_rtools() # run this command from the devtools package
+# or
+devtools::find_rtools() 
+# should return TRUE in your console
+```
+## Important packages
+
+Install and call a few packages that you would likely use often. First, install the \verb|pacman| package:
+
+```{r pacman, eval = F}
+install.packages("pacman") # downloads pacman from CRAN
+library(pacman) # pulls pacman into our library
+```
+
+With \verb|pacman| we are easily able to install and call new and old packages from curated packages in CRAN or any open-source package from \textbf{\href{https://github.com/}{GitHub}} using \verb|p_load()| and \verb|p_load_gh()| respectively. For example, download and call \verb|installr|.
+
+```{r pac_example, eval = F}
+# Packages need only be installed once, so
+install.packages("installr")
+# and can be called into your library by
+library(installr)
+
+
+pacman::p_load(installr)
+```
+
+
+
+
+### Regression tables
+
+I have fairly strong preferences about how regression tables should look (threeparttable FTW). Luckily, the fantastic **modelsummary** package has us covered for nice looking regression tables, particularly since it automatically supports different Rmd output formats and backends. (For example, via the equally excellent **kableExtra** package.) This makes it easy to produce regression tables that look good in both HTML and PDF... although the latter requires that the corresponding LaTeX packages be loaded first. This template loads those LaTeX packages automatically, so tables like the below Just Work^TM^.
+
+```{r msummary, message=FALSE, warning=FALSE}
+library(fixest) ## For quick multi-model regression object
+
+mods = feols(c(mpg, hp) ~ disp + csw(wt, drat) | cyl + vs, data = mtcars)
+
+library(modelsummary)
+library(kableExtra)
+
+msummary(
+  mods, 
+  title = "fixest: multi-model estimation", 
+  stars = TRUE,
+  gof_omit = "Adj|Pseudo|Log|AIC|BIC"
+  ) %>%
+  add_footnote(
+    c(paste("This footnote is pretty long. In fact, it runs over several lines",
+          "of standard PDF output. Luckily that's no problem thanks to",
+          "modelsummary, kableExtra, and threeparttable. As an aside, the",
+          "fixest package is also amazing and you should use it."),
+      "A shorter note."),
+    threeparttable = TRUE
+    ) %>%
+  kable_styling(latex_options = "hold_position") ## (Optional) Print table directly below code
+```
+
+### PDF support for non-standard fonts
+
+This is an easy one; simply a matter of adding `dev: cairo_pdf` to the YAML. But it's nice not having to remember that every time, no?
+
+*Note: As the figure caption suggests, to run this next chunk you'll need to add [Arial Narrow](https://docs.microsoft.com/en-us/typography/font-list/arial-narrow) to your font book if it's not installed on your system already.*
+
+```{r mpg, message=FALSE}
+library(ggplot2)
+library(hrbrthemes)
+
+ggplot(mtcars, aes(mpg, wt)) +
+  geom_point() +
+  labs(x = "Fuel efficiency (mpg)", y = "Weight (tons)",
+       title = "This plot uses Arial Narrow fonts",
+       caption = "Note: Fonts must be installed separately on your system.") + 
+  theme_ipsum()
+```
+
+### Ignore interactive content when exporting to PDF
+
+In general, this template tries to do a good job of automatically handling (i.e. ignoring) interactive content when exporting to PDF. A notable exception is with embedded interactive content like external GIFs. In this case, rather than typing the usual, say, `![](mind-blown.gif)` directly in the Rmd file, you should include the figure with `knitr::include_graphics` in an R chunk. This will allow you to control whether it renders, conditional on output format. For example, the following chunk will render an actual GIF when the knit target is HTML format, versus a message when that target is PDF format.
+
+```{r gif_example, echo = FALSE, out.width='100%'}
+my_gif = 'https://github.com/grantmcdermott/lecturenotes/blob/master/man/figures/mind-blown.gif?raw=true'
+if (knitr::is_html_output()){
+  knitr::include_graphics(my_gif)
+} else {
+  message("Sorry, this GIF is only available in the the HTML version of the notes.")
+}
+```
