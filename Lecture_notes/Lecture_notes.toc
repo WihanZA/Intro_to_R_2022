@@ -1,5 +1,6 @@
 \contentsline {subsection}{Why R?}{1}{section*.2}%
 \contentsline {subsection}{Before we start}{2}{section*.3}%
-\contentsline {subsubsection}{Regression tables}{2}{section*.4}%
-\contentsline {subsubsection}{PDF support for non-standard fonts}{3}{section*.5}%
-\contentsline {subsubsection}{Ignore interactive content when exporting to PDF}{4}{section*.6}%
+\contentsline {subsection}{Important packages}{2}{section*.4}%
+\contentsline {subsubsection}{Regression tables}{3}{section*.5}%
+\contentsline {subsubsection}{PDF support for non-standard fonts}{4}{section*.6}%
+\contentsline {subsubsection}{Ignore interactive content when exporting to PDF}{5}{section*.7}%

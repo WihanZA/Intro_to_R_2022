@@ -18,7 +18,7 @@ output:
   pdf_document:
     latex_engine: xelatex
     keep_tex: false ## Change to true if want keep intermediate .tex file
-    toc: true
+    toc: false
     toc_depth: 3
     dev: cairo_pdf
     # fig_width: 7 ## Optional: Set default PDF figure width
@@ -32,6 +32,7 @@ always_allow_html: true
 header-includes:
 - \usepackage{siunitx}
 - \usepackage{graphicx}
+- \usepackage{float}
 
 urlcolor: blue
 # mainfont: Cochineal
@@ -102,36 +103,71 @@ sessionInfo()[1]$R.version$version.string
 ```
 
 To verify that we have installed Rtools properly, we need to make use of the \verb|devtools| package.
-
 ```{r devtools, eval = F}
-install.packages("devtools") # install the package from CRAN
-library(devtools) # initialize package into your current library
+install.packages("devtools") # Install the package from CRAN.
+library(devtools) # Load package into your current library.
 
-find_rtools() # run this command from the devtools package
+find_rtools() # Run this command from the devtools package
 # or
 devtools::find_rtools() 
 # should return TRUE in your console
 ```
 ## Important packages
 
-Install and call a few packages that you would likely use often. First, install the \verb|pacman| package:
+Install and load a few packages that you would likely use often. Let's use the \verb|installr| package as an example.
+
+```{r pac_example1, eval = F}
+# Packages need only be installed once
+install.packages("installr")
+# and can be loaded into your library with
+library(installr)
+```
+
+However, if I have already installed \verb|installr| before, \verb|install.packages()| produces the following error:
+\begin{figure}[H]
+\includegraphics{install_pac}
+\centering
+\end{figure}
+
+It can be hard to keep track of all the packages that you have or have not installed on your machine. How, then, should we install packages?
+
+```{r pac_example2, eval = F}
+# In short: if package has not yet been installed, run code to install
+if (!require(installr)) {
+    install.packages("installr")
+    require(installr)
+}
+```
+
+Instead, I propose using the \verb|pacman| package. It enables us to easily install new- and load old packages from curated lists such as CRAN, or any open-source package from \textbf{\href{https://github.com/}{GitHub}} using \verb|p_load()| and \verb|p_load_gh()|, respectively. These commands install packages if they have not yet been installed, and subsequently loads them into our library. 
 
 ```{r pacman, eval = F}
-install.packages("pacman") # downloads pacman from CRAN
-library(pacman) # pulls pacman into our library
-```
+# Installs pacman from CRAN.
+if (!require(pacman)) {
+    install.packages("pacman")
+    require(pacman)
+}
+# Load pacman into our library.
+library(pacman)
 
-With \verb|pacman| we are easily able to install and call new and old packages from curated packages in CRAN or any open-source package from \textbf{\href{https://github.com/}{GitHub}} using \verb|p_load()| and \verb|p_load_gh()| respectively. For example, download and call \verb|installr|.
-
-```{r pac_example, eval = F}
-# Packages need only be installed once, so
-install.packages("installr")
-# and can be called into your library by
-library(installr)
-
-
+# And finally...
 pacman::p_load(installr)
 ```
+
+Why did we load \verb|installr| in the first place?
+
+```{r installr, eval = F}
+# Are you using the latest version of R?
+check.for.updates.R()  
+# Download and run the latest R Version.
+install.R()
+# Copy your packages to the newest R installation
+copy.packages.between.libraries()
+```
+
+
+
+
 
 
 
