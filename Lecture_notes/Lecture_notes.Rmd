@@ -3,7 +3,7 @@ title: Introduction to R
 subtitle: Intensive Statistics Course
 author:
   name: Wihan Marais
-  affiliation: wihanmarais@sun.ac.za
+  affiliation: \text{wihanmarais@sun.ac.za} | github.com/WihanZA
 date: "25 January 2022" ## Or "Lecture no."
 output: 
   # html_document:
@@ -33,6 +33,7 @@ header-includes:
 - \usepackage{siunitx}
 - \usepackage{graphicx}
 - \usepackage{float}
+- \usepackage{cleveref}
 
 urlcolor: blue
 # mainfont: Cochineal
@@ -59,8 +60,7 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warni
 \begin{itemize}
 \item At the time of writing, a new \href{https://www.quantec.co.za/store/}{Stata 17 annual license} is priced between R11,670 and R21,280 excluding VAT.
 \item Free upgrades, updates and dissemination.
-\item Availability of helpful resources like \textbf{\href{https://stackoverflow.com/}{stackoverflow}} and \textbf{\href{https://www.statmethods.net/}{Quick-R}}.
-\end{itemize}
+\item Availability of helpful resources like \textbf{\href{https://stackoverflow.com/}{stackoverflow}}. \end{itemize}
 \item R uses \textbf{packages}
 \begin{itemize}
 \item R consists of Base-R coupled with third-party libraries of pre-written code, or packages.
@@ -74,7 +74,7 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warni
 \item R is compatible with Markdown.
 \begin{itemize}
 \item These lecture notes were created as a `.Rmd` file using \textbf{R Markdown}, RStudio's native authoring framework for data science.
-\item See this \href{https://rmarkdown.rstudio.com/lesson-1.html}{1-minute video summary of what R Markdown entails.}
+\item See this \href{https://rmarkdown.rstudio.com/lesson-1.html}{1-minute video summary} of what R Markdown entails.
 \end{itemize}
 \end{enumerate}
 
@@ -139,7 +139,7 @@ if (!require(installr)) {
 }
 ```
 
-Instead, I propose using the \verb|pacman| package. It enables us to easily install new- and load old packages from curated lists such as CRAN, or any open-source package from \textbf{\href{https://github.com/}{GitHub}} using \verb|p_load()| and \verb|p_load_gh()|, respectively. These commands install packages if they have not yet been installed, and subsequently loads them into our library. 
+Instead, I propose using the \verb|pacman| package. It enables us to easily install new- and load old packages from curated lists such as CRAN, or any open-source package from \textbf{\href{https://github.com/}{GitHub}} using \verb|p_load()| and \verb|p_load_gh()|, respectively. These commands install packages if they have not yet been installed, and subsequently load them into our library. 
 
 ```{r pacman, eval = F}
 # Installs pacman from CRAN.
@@ -164,6 +164,18 @@ install.R()
 # Copy your packages to the newest R installation
 copy.packages.between.libraries()
 ```
+
+What are the packages we need to install and load?
+```{r packages_setup, eval= F}
+# From CRAN
+pacman::p_load(fixest, tidyverse, huxtable, hrbrthemes, modelsummary, glue)
+
+# From GitHub
+pacman::p_load_gh("karthik/wesanderson",
+                  "BlakeRMills/MetBrewer")
+                # "profile/repository name"
+```
+
 
 
 
@@ -219,15 +231,26 @@ ggplot(mtcars, aes(mpg, wt)) +
   theme_ipsum()
 ```
 
-### Ignore interactive content when exporting to PDF
+## Acknowledgements and further reading
 
-In general, this template tries to do a good job of automatically handling (i.e. ignoring) interactive content when exporting to PDF. A notable exception is with embedded interactive content like external GIFs. In this case, rather than typing the usual, say, `![](mind-blown.gif)` directly in the Rmd file, you should include the figure with `knitr::include_graphics` in an R chunk. This will allow you to control whether it renders, conditional on output format. For example, the following chunk will render an actual GIF when the knit target is HTML format, versus a message when that target is PDF format.
+Lecture notes are compiled from the following resources:
+\begin{itemize}
+\item \textit{\href{https://raw.githack.com/grantmcdermott/R-intro/master/rIntro.html}{R intro}} (2018) by Grant R. McDermott and Ed Rubin.
+\item \textit{\href{https://datsci.nfkatzke.com/posts/2019-07-24-practical-1-getting-you-started/}{Data Science for Economics and Finance: Getting you staRted}} (2021) by N.F. Katzke.
+\end{itemize}
+Should you need additional resources to get started, try the following:
+\begin{itemize}
+\item \href{https://www.statmethods.net/}{Quick-R}
+\item \href{https://stata2r.github.io/}{Stata2R}
+\item \href{https://stat447.com/}{Data Science Programming Methods (STAT 447)} by Dirk Eddelbuettel (University of Illinois)
+\item \href{https://www.rstudio.com/resources/cheatsheets/}{RStudio Cheatsheets}
+\item \href{https://github.com/uo-ec607/lectures}{Data Science for Economists (EC 607)} by  Grant McDermott (University of Oregon)
+\item Use your student credentials to sign up for a \href{https://education.github.com/pack}{GitHub Pro} account. 
+\item Download \href{https://desktop.github.com/}{GitHub Desktop} for free and use version control for all your projects.
+\end{itemize}
+ 
 
-```{r gif_example, echo = FALSE, out.width='100%'}
-my_gif = 'https://github.com/grantmcdermott/lecturenotes/blob/master/man/figures/mind-blown.gif?raw=true'
-if (knitr::is_html_output()){
-  knitr::include_graphics(my_gif)
-} else {
-  message("Sorry, this GIF is only available in the the HTML version of the notes.")
-}
-```
+ 
+
+
+

@@ -5,3 +5,16 @@ modelsummary
 kableExtra
 ggplot2
 hrbrthemes
+tidyverse
+tibble
+tidyr
+readr
+purrr
+stringr
+forcats
+huxtable
+glue
+viridisLite
+viridis
+wesanderson
+MetBrewer
