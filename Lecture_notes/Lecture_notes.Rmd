@@ -49,6 +49,10 @@ knit: (function(inputFile, encoding) {
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warning = FALSE)
+
+library(pacman)
+pacman::p_load(fixest, tidyverse, huxtable, hrbrthemes, modelsummary, glue)
+pacman::p_load_gh("karthik/wesanderson", "BlakeRMills/MetBrewer")
 ```
 
 \graphicspath{ {./images/} }
@@ -112,7 +116,7 @@ find_rtools() # Run this command from the devtools package
 devtools::find_rtools() 
 # should return TRUE in your console
 ```
-## Important packages
+## Packages
 
 Install and load a few packages that you would likely use often. Let's use the \verb|installr| package as an example.
 
@@ -171,22 +175,142 @@ What are the packages we need to install and load?
 pacman::p_load(fixest, tidyverse, huxtable, hrbrthemes, modelsummary, glue)
 
 # From GitHub
-pacman::p_load_gh("karthik/wesanderson",
-                  "BlakeRMills/MetBrewer")
+pacman::p_load_gh("karthik/wesanderson", "BlakeRMills/MetBrewer")
                 # "profile/repository name"
 ```
 
 
+## Basics
+
+### Projects
+
+To improve your workflow in R, it is essential to work from a R project or directory.
+
+\verb|File > New project > New directory > New project > Choose directory location and name|
+
+If you are planning on applying version control to your new project, it is useful to check \verb|Create git repository|. Once you have created a project, its location will serve as your 'root folder' or reference directory for any future operations performed within this project. It is advisable to always reopen a R session by clicking the relevant \verb|.Rproj| file, as it will keep track of your most current workspace and variable environment.
+
+### Workspace
+
+When operating from a new project, you ought to observe a workspace divided into quadrants as summarised in \Cref{tab:workspace}. As with Stata, code can be typed and executed directly from your console (previously "Command"). Alternatively, this code can be stored in\textemdash and later relied upon\textemdash a script or \verb|.R| file (like Stata do-file).
+
+```{r workspace_tab, echo=F}
+read.csv("images/workspace.csv", header = T) %>% as_hux() %>% theme_basic() %>% set_caption("Workspace\\label{tab:workspace}") %>% set_latex_float("h!") %>% set_escape_contents(T)
+
+```
+
+R is an object-orientated language. Objects of various types (scalars, matrices, data frames, vectors, etc.) can be stored in memory for later use. Once named and saved, these objects will appear in your global environment. In R, we use the assignment operator \verb|<-| to name and save objects (Tip: \textbf{Alt/Option} + \textbf{-}). For example:
+```{r object_example, eval = T}
+# object name <- value(s)
+a <- 10
+hello <- "Hello world!"
+```
+By highlighting and executing the relevant code (Ctrl/Cmd + Enter), \verb|a| and \verb|hello| should appear in your global environment like this:
+\begin{figure}[H]
+\includegraphics{environment}
+\centering
+\end{figure}
+We are able to report these variables in our console (or R Markdown output) by running the following:
+```{r object_result, eval = T}
+a
+# or
+print(hello)
+# or by using the glue package for something more fancy
+glue::glue("I saved a variable which contains {hello} and I stored the number {a}.")
+```
+Finally, your directories can be viewed to the bottom right, in addition to plot outputs, currently loaded packages, and help files. Should you ever require help or additional information regarding a specific command, add a \verb|?| before that command and run the code. For example:
+```{r glue_help, eval = F}
+?glue::glue()
+```
+
+### Arrays
+
+In R, an "array" object is basically a vector of values in the form of integers, doubles, string, etc. An array can be created by using the \textbf{concatenate} function or \verb|c()|.
+
+```{r arrays, eval = F}
+x <- c(1, 2, 3)
+y <- c(4, 5, 7)
+z <- c(7, 8, 9)
+
+# Useful functions to perform on arrays/vectors
+sum(x)
+min(x)
+median(x)
+summary(x) 
+# the latter provides a summary of the functions above
+
+```
+### Data frames
+
+Data frames are the workhorse of statistical analysis in R. Data frames are essentially tables of data consisting of rows and columns. Both rows and columns can also be assigned headings. They can be constituted in a variety of ways.
+
+```{r dataframes1, eval = F}
+# data.frame() can create columns from arrays and assign column names
+df_1 <- data.frame(A = x, B = y, C = z)
+# arrays must be of the same length!
 
 
+```
 
+Specific rows, columns, and cells can be referenced as follows:
+```{r dataframes2, eval = F}
+# Return column "A" as a vector
+df_1$A # "$" preceding the name of column "A"
+df_1[ , 1] # [all rows, column = 1] - empty reference implies all
+df_1 %>% pull(A) # Ctrl/Cmd + Shift + M for %>% 
 
+# Return row 2 as single row data frame
+df_1[2, ]
 
+# Return row 2-3 as two row data frame 
+df_1[2:3, ]
+
+# Return cell in row 2 column 1
+df_1[2, 1]
+
+# Create a new column "D" that is the sum of A and B
+df_1$D <- df_1$A + df_1$B # notice the assignment operator
+# or
+df_1 <- df_1 %>% mutate(D = A + B)
+```
+
+As you can see, there's more than one way to skin a cat in R.
+
+### Reading and writing data
+
+In practice, you will likely be loading data from external files, such as a \verb|.csv| file. For instance, create a data frame from the external file \verb|Ireland_energy.csv| which contains Ireland's energy consumption data for 1980-2018. Do the same for the corresponding file for Ireland's population, \verb|Ireland_population.csv|.
+
+```{r reading, eval = T, echo=TRUE}
+ire_energy <- read.csv(file = "data/Ireland_energy.csv", header = TRUE)
+# "file" refers to the file path originating from your root directory
+# "header" is set to true because the .csv file contains column headings
+
+ire_pop <- read.csv(file = "data/Ireland_population.csv", header = TRUE)
+```
+
+Merge the two data frames to create a single data frame. Subsequently, create a new variable (or column) for the natural logarithm of Ireland's per capita energy consumption.
+```{r merge, eval=TRUE}
+ireland_df <- merge(x = ire_energy, y = ire_pop, by.x = "Year", by.y = "Year")
+# Create new data frame ireland_df
+# merge() allows specification of two constituent data frames (x & Y)
+# as well as their common column on the basis of which matching occurs (by.x & by.y)
+
+ireland_df <- ireland_df %>% mutate(ln_per_capita = log(GJ/Population))
+# Assign 'new' data frame with additional variable 
+# tidyverse piping ( %>% )
+# mutate(new_variable_name = transformation with existing columns) 
+# log()'s defualt setting implies natural logarithm
+
+```
+
+```{r reading_tab, eval = T, echo = F}
+ireland_df %>% arrange(desc(Year)) %>% as_hux() %>% theme_basic() %>% set_latex_float("H") %>% set_caption("Ireland's energy consumption\\label{tab:ire_energy}") %>% set_caption_width(1) %>% set_number_format(col = 2,value = 2)
+```
 
 
 ### Regression tables
 
-I have fairly strong preferences about how regression tables should look (threeparttable FTW). Luckily, the fantastic **modelsummary** package has us covered for nice looking regression tables, particularly since it automatically supports different Rmd output formats and backends. (For example, via the equally excellent **kableExtra** package.) This makes it easy to produce regression tables that look good in both HTML and PDF... although the latter requires that the corresponding LaTeX packages be loaded first. This template loads those LaTeX packages automatically, so tables like the below Just Work^TM^.
+I have fairly strong preferences about how regression tables should look (threeparttable FTW). Luckily, the fantastic **modelsummary** package has us covered for nice looking regression tables, particularly since it automatically supports different Rmd output formats and backends. (For example, via the equally excellent **kableExtra** package.) This makges it easy to produce regression tables that look good in both HTML and PDF... although the latter requires that the corresponding LaTeX packages be loaded first. This template loads those LaTeX packages automatically, so tables like the below Just Work^TM^.
 
 ```{r msummary, message=FALSE, warning=FALSE}
 library(fixest) ## For quick multi-model regression object
