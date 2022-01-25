@@ -4,7 +4,7 @@ subtitle: Intensive Statistics Course
 author:
   name: Wihan Marais
   affiliation: \text{wihanmarais@sun.ac.za} | github.com/WihanZA
-date: "25 January 2022" ## Or "Lecture no."
+date: "25-26 January 2022" ## Or "Lecture no."
 output: 
   # html_document:
   #   keep_md: false
@@ -51,7 +51,7 @@ knit: (function(inputFile, encoding) {
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warning = FALSE, fig.height = 3.5)
 
 library(pacman)
-pacman::p_load(fixest, tidyverse, huxtable, hrbrthemes, modelsummary, glue)
+pacman::p_load(fixest, tidyverse, huxtable, hrbrthemes, modelsummary, glue, skimr)
 pacman::p_load_gh("karthik/wesanderson", "BlakeRMills/MetBrewer")
 ```
 
@@ -325,7 +325,7 @@ write.csv(ireland_df, file = "data/ireland_complete.csv", append = FALSE,
 # "_.names" set TRUE if we have assigned names
 ```
 
-## Some time series analyses
+## Time series analyses
 
 Let us perform some time series analysis on our data frame. Compute and plot the autocorrelation- and partial autocorrelation function of Ireland's per capita energy consumption. For this we need the \verb|stats| package.
 
@@ -370,7 +370,7 @@ ireland_df %>% ggplot() + # creates the 'canvas'
   # add axis titles and main title
 ```
 
-Does this time series look stationary to you? Use the \verb|urca| package to perform Augmented Dickey-Fuller tests with the command \verb|ur.df()|.
+Does this time series look stationary to you? Use the \verb|urca| package to perform Augmented Dickey-Fuller (ADF) tests with the command \verb|ur.df()|.
 
 ```{r adf, eval = T, echo= T}
 pacman::p_load(urca)
@@ -388,7 +388,7 @@ my_ADF1 <- ur.df(
 # use Base-R's summary() to present ADF object
 summary(my_ADF1) 
 ```
-Is the null hypothesis rejected? How about trying an ADF test that specifies only a constant/drift?
+Is the null hypothesis rejected? How about an ADF test that specifies only a constant/drift?
 
 ```{r adf_const, eval = T, echo= T}
 
@@ -401,7 +401,72 @@ my_ADF2 <- ur.df(
 
 summary(my_ADF2) 
 ```
+# Cross section analyses
 
+We loaded the \verb|fixest| and \verb|huxtable| packages for a good reason. The packages ease the estimation and presentation of a host of standard and complex regression models. For good measure, we can load them again with \verb|pacman::p_load(fixest, huxtable)|. Before we explore some examples, we need a data frame. \verb|.csv| files can be downloaded directly from the internet and stored as a data frame as before.
+```{r cs_read, eval = T, cache=T}
+# We replace a local file path with a web address
+cs_df <- read.csv(
+  'https://raw.githubusercontent.com/stata2r/stata2r.github.io/main/data/cps_long.csv')
+# We do not need to specify header = TRUE as this is also the default
+
+# Explore the new data frame
+view(cs_df)
+```
+
+Let us consider how to perform standard OLS regressions with \verb|fixest|'s \verb|feols()| function. At the very least, this function requires two arguments, A) a formula in the format \verb|y ~ x1 + x2| and B) a data set/table/frame or \verb|data|. For example, what bearing does education have on wages of those observations for 1974?
+```{r ols, eval = T}
+# First, subset the data to those observations for 1974
+new_cs_df <- cs_df %>% filter(year == 1974)
+
+# Our first model
+model1 <- feols(wage ~ educ, data = new_cs_df)
+
+# Adding an explanatory continuous variable
+model2 <- feols(wage ~ educ + age, data = new_cs_df)
+
+# Adding a categorical variable
+model3 <- feols(wage ~ educ + age + i(marr), data = new_cs_df)
+
+# Print your models using huxtable's huxreg()
+# List the models you would like to appear in the table
+huxreg(model1, model2, model3) 
+
+```
+You can find guides to the \verb|huxtable| package and the \verb|huxreg()| function \href{https://cran.r-project.org/web/packages/huxtable/vignettes/huxtable.html}{here} and \href{https://cran.r-project.org/web/packages/huxtable/vignettes/huxreg.html}{here}, respectively. \verb|huxreg()| is highly adaptable and easy to use. For example:
+```{r hux, eval = T}
+huxreg("Pretty 1" = model1, "Pretty 2" = model2, "Pretty 3" = model3,
+       # choose statistics to display
+       statistics = c("N" = "nobs", "R-squared" = "r.squared"),
+       # change stars criteria
+       stars = c(`*` = 0.1, `**` = 0.05, `***` = 0.01, `****` = 0.001),
+       # rounded to 2 decimals
+       number_format = 2 
+       ) %>%
+# The following are huxtable commands and are also piped
+set_font_size(8) %>% 
+set_align(10:11, 2:4, value = "center") %>% 
+set_caption("My pretty regressions")
+```
+\verb|fixest| also contains plotting functions that create, among others, coefficient plots and interaction plots. For example:
+```{r coefplots, eval = T}
+# Combine the coefficient plots for each model
+# Notice that models need to be entered as a list() object
+coefplot(list(model1, model2, model3))
+
+# Now create a new model with an interaction term
+model4 = feols(wage ~ i(factor(marr), age), data = new_cs_df)
+# factor() tells the model that marr categorical
+# so does i() unless it contains more than one variable
+# then it indicates an interaction
+
+# What do the results say?
+summary(model4)
+
+# Show how age's effect on wages differs by marriage status
+iplot(model4)
+
+```
 
 \clearpage
 
@@ -411,20 +476,15 @@ Lecture notes are compiled from the following resources:
 \begin{itemize}
 \item \textit{\href{https://raw.githack.com/grantmcdermott/R-intro/master/rIntro.html}{R intro}} (2018) by Grant R. McDermott and Ed Rubin.
 \item \textit{\href{https://datsci.nfkatzke.com/posts/2019-07-24-practical-1-getting-you-started/}{Data Science for Economics and Finance: Getting you staRted}} (2021) by N.F. Katzke.
+\item \href{https://stata2r.github.io/}{Stata2R}
 \end{itemize}
 Should you need additional resources to get started, try the following:
 \begin{itemize}
 \item \href{https://www.statmethods.net/}{Quick-R}
-\item \href{https://stata2r.github.io/}{Stata2R}
 \item \href{https://stat447.com/}{Data Science Programming Methods (STAT 447)} by Dirk Eddelbuettel (University of Illinois)
 \item \href{https://www.rstudio.com/resources/cheatsheets/}{RStudio Cheatsheets}
-\item \href{https://github.com/uo-ec607/lectures}{Data Science for Economists (EC 607)} by  Grant McDermott (University of Oregon)
+\item \href{https://github.com/uo-ec607/lectures}{Data Science for Economists (EC 607)} by Grant McDermott (University of Oregon)
 \item Use your student credentials to sign up for a \href{https://education.github.com/pack}{GitHub Pro} account. 
 \item Download \href{https://desktop.github.com/}{GitHub Desktop} for free and use version control for all your projects.
+\item Wonderful data visualisation guide with R code, \href{https://www.data-to-viz.com/}{Data to Viz}.
 \end{itemize}
- 
-
- 
-
-
-
