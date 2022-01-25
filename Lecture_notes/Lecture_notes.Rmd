@@ -48,7 +48,7 @@ knit: (function(inputFile, encoding) {
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, dpi=300, message = FALSE, warning = FALSE, fig.height = 3.5)
 
 library(pacman)
 pacman::p_load(fixest, tidyverse, huxtable, hrbrthemes, modelsummary, glue)
@@ -204,6 +204,10 @@ R is an object-orientated language. Objects of various types (scalars, matrices,
 # object name <- value(s)
 a <- 10
 hello <- "Hello world!"
+
+# If you want to determine the type/class of an object
+class(a)
+class(hello)
 ```
 By highlighting and executing the relevant code (Ctrl/Cmd + Enter), \verb|a| and \verb|hello| should appear in your global environment like this:
 \begin{figure}[H]
@@ -290,70 +294,116 @@ ire_pop <- read.csv(file = "data/Ireland_population.csv", header = TRUE)
 
 Merge the two data frames to create a single data frame. Subsequently, create a new variable (or column) for the natural logarithm of Ireland's per capita energy consumption.
 ```{r merge, eval=TRUE}
-ireland_df <- merge(x = ire_energy, y = ire_pop, by.x = "Year", by.y = "Year")
-# Create new data frame ireland_df
-# merge() allows specification of two constituent data frames (x & Y)
-# as well as their common column on the basis of which matching occurs (by.x & by.y)
+ireland_df <- merge(x = ire_energy, y = ire_pop, by.x = "Year", by.y = "Year") %>% 
+  # Create new data frame ireland_df
+  # merge() allows specification of two constituent data frames (x & Y)
+  # as well as their common column on the basis of which matching occurs (by.x & by.y)
 
-ireland_df <- ireland_df %>% mutate(ln_per_capita = log(GJ/Population))
-# Assign 'new' data frame with additional variable 
-# tidyverse piping ( %>% )
-# mutate(new_variable_name = transformation with existing columns) 
-# log()'s defualt setting implies natural logarithm
+  mutate(ln_energy_pc = log(GJ/Population)) %>% 
+  # tidyverse piping ( %>% )
+  # mutate(new_variable_name = transformation with existing columns) 
+  # log()'s defualt setting implies natural logarithm
+  
+  mutate(Year = glue::glue("{Year}-01-01"), Year = as.Date(Year,  format = "%Y-%m-%d"))
+  # Using glue to code years as e.g. 1980-01-01 instead of 1980
+  # Render new Year into a date format
 
 ```
 
 ```{r reading_tab, eval = T, echo = F}
-ireland_df %>% arrange(desc(Year)) %>% as_hux() %>% theme_basic() %>% set_latex_float("H") %>% set_caption("Ireland's energy consumption\\label{tab:ire_energy}") %>% set_caption_width(1) %>% set_number_format(col = 2,value = 2)
+ireland_df %>% arrange(desc(Year)) %>% filter(Year > as.Date("2013-01-01")) %>% as_hux() %>% theme_basic() %>% set_latex_float("H") %>% set_caption("Ireland's energy consumption\\label{tab:ire_energy}") %>% set_caption_width(1) %>% set_number_format(col = 2,value = 2) %>% set_font_size(10)
+
+```
+
+We can now write this data frame back to a \verb|.csv| file.
+```{r write, eval=F}
+write.csv(ireland_df, file = "data/ireland_complete.csv", append = FALSE,
+          col.names = TRUE, row.names = FALSE)
+# data frame to be written to csv
+# file path
+# "append" set to FALSE to imply that any file with the same name will be overwritten
+# "_.names" set TRUE if we have assigned names
+```
+
+## Some time series analyses
+
+Let us perform some time series analysis on our data frame. Compute and plot the autocorrelation- and partial autocorrelation function of Ireland's per capita energy consumption. For this we need the \verb|stats| package.
+
+```{r autocor, eval = T}
+pacman::p_load(stats) 
+
+# Confirm that data is chronological
+ireland_df <- ireland_df %>% arrange(Year)
+
+# Isolate the column - notice the use of dplyr::
+Energy_Consumption <- ireland_df %>% dplyr::select(ln_energy_pc)
+
+# Use acf() and store our ACF and PACF in memory
+my_acf <- stats::acf(
+  x = Energy_Consumption, 
+  plot = T, # automatically create a plot
+  type = "correlation") # we want the standard AF
+
+my_pacf <- stats::acf(
+  x = Energy_Consumption,
+  plot = T,
+  type = "partial") # we want the PACF option
+
+# Remember to unload this package - Why?
+pacman::p_unload(stats) 
+```
+
+I have a strong preference for \verb|ggplot|'s plotting capabilities. Data visualisation is made easy in R, however it deserves an entire lecture in and of itself. As many of the functions you will be using, \verb|ggplot| is a part of the so-called \verb|tidyverse|. To illustrate, let us make a line graph of our variable of interest.
+
+```{r ggplot, eval = T, echo= T}
+ireland_df %>% ggplot() + # creates the 'canvas'
+  theme_bw() + # choose on of many existing themes
+  geom_line(aes(x = Year, y = ln_energy_pc), size = 1, alpha = 0.9, color = "darkgreen") + 
+  # creates the line on the canvas with aes() coordinates
+  geom_point(aes(x = Year, y = ln_energy_pc), size = 2, alpha = 0.9, color = "darkgreen") + 
+  # similarly for points
+  scale_x_date(date_labels = "'%y", date_breaks = "year") +
+  # make x axis labels
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  # rotate x axis labels
+  labs(title = "Ireland's Primary Energy Consumption", y = "ln(GJs per capita)", x = "Date")
+  # add axis titles and main title
+```
+
+Does this time series look stationary to you? Use the \verb|urca| package to perform Augmented Dickey-Fuller tests with the command \verb|ur.df()|.
+
+```{r adf, eval = T, echo= T}
+pacman::p_load(urca)
+
+# Currently, Energy_Consumption is still a data frame and y should be a vector
+test_vector <- Energy_Consumption %>% pull(ln_energy_pc)
+
+my_ADF1 <- ur.df(
+  y = test_vector, # vector
+  type = "trend", # type  of ADF - trend + constant
+  lags = 5, # max lags
+  selectlags = "AIC" # lag selection criteria
+  )
+
+# use Base-R's summary() to present ADF object
+summary(my_ADF1) 
+```
+Is the null hypothesis rejected? How about trying an ADF test that specifies only a constant/drift?
+
+```{r adf_const, eval = T, echo= T}
+
+my_ADF2 <- ur.df(
+  y = test_vector,
+  type = "drift", # type  of ADF - with drift
+  lags = 5, 
+  selectlags = "AIC" 
+  )
+
+summary(my_ADF2) 
 ```
 
 
-### Regression tables
-
-I have fairly strong preferences about how regression tables should look (threeparttable FTW). Luckily, the fantastic **modelsummary** package has us covered for nice looking regression tables, particularly since it automatically supports different Rmd output formats and backends. (For example, via the equally excellent **kableExtra** package.) This makges it easy to produce regression tables that look good in both HTML and PDF... although the latter requires that the corresponding LaTeX packages be loaded first. This template loads those LaTeX packages automatically, so tables like the below Just Work^TM^.
-
-```{r msummary, message=FALSE, warning=FALSE}
-library(fixest) ## For quick multi-model regression object
-
-mods = feols(c(mpg, hp) ~ disp + csw(wt, drat) | cyl + vs, data = mtcars)
-
-library(modelsummary)
-library(kableExtra)
-
-msummary(
-  mods, 
-  title = "fixest: multi-model estimation", 
-  stars = TRUE,
-  gof_omit = "Adj|Pseudo|Log|AIC|BIC"
-  ) %>%
-  add_footnote(
-    c(paste("This footnote is pretty long. In fact, it runs over several lines",
-          "of standard PDF output. Luckily that's no problem thanks to",
-          "modelsummary, kableExtra, and threeparttable. As an aside, the",
-          "fixest package is also amazing and you should use it."),
-      "A shorter note."),
-    threeparttable = TRUE
-    ) %>%
-  kable_styling(latex_options = "hold_position") ## (Optional) Print table directly below code
-```
-
-### PDF support for non-standard fonts
-
-This is an easy one; simply a matter of adding `dev: cairo_pdf` to the YAML. But it's nice not having to remember that every time, no?
-
-*Note: As the figure caption suggests, to run this next chunk you'll need to add [Arial Narrow](https://docs.microsoft.com/en-us/typography/font-list/arial-narrow) to your font book if it's not installed on your system already.*
-
-```{r mpg, message=FALSE}
-library(ggplot2)
-library(hrbrthemes)
-
-ggplot(mtcars, aes(mpg, wt)) +
-  geom_point() +
-  labs(x = "Fuel efficiency (mpg)", y = "Weight (tons)",
-       title = "This plot uses Arial Narrow fonts",
-       caption = "Note: Fonts must be installed separately on your system.") + 
-  theme_ipsum()
-```
+\clearpage
 
 ## Acknowledgements and further reading
 
