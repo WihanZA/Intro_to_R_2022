@@ -1,6 +1,7 @@
 ---
-title: "README"
+title: "Introduction to R"
 output: github_document
+date: "25 - 26 January 2022"
 ---
 
 ```{r setup, include=FALSE}
@@ -9,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Purpose
 
-This repository contains the resources I employed during the presentation of two lectures titled _Introduction to R_ to Masters Economics students at the University of Stellenbosch. The aim of the lectures was to offer a cursory introduction to R, RStudio, and GitHub to enable students to perform basic operations in a brief amount of time. Students were also tasked to complete a short assignment.
+This repository contains the resources I employed during the presentation of two lectures titled _Introduction to R_ during the _Intensive Statistics Course_ for Masters economics students at the University of Stellenbosch. The aim of the lectures was to offer a cursory introduction to R, RStudio, and GitHub to enable students to perform basic operations in a brief amount of time. Students were also tasked to complete a short assignment.
 
 ## Acknowledgements
 

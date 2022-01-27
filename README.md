@@ -1,14 +1,16 @@
-README
+Introduction to R
 ================
+25 - 26 January 2022
 
 ## Purpose
 
 This repository contains the resources I employed during the
-presentation of two lectures titled *Introduction to R* to Masters
-Economics students at the University of Stellenbosch. The aim of the
-lectures was to offer a cursory introduction to R, RStudio, and GitHub
-to enable students to perform basic operations in a brief amount of
-time. Students were also tasked to complete a short assignment.
+presentation of two lectures titled *Introduction to R* during the
+*Intensive Statistics Course* for Masters economics students at the
+University of Stellenbosch. The aim of the lectures was to offer a
+cursory introduction to R, RStudio, and GitHub to enable students to
+perform basic operations in a brief amount of time. Students were also
+tasked to complete a short assignment.
 
 ## Acknowledgements
 
