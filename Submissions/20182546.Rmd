@@ -1,0 +1,36 @@
+---
+title: "20182546"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval= TRUE, fig.height = 3.5, fig.width = 6)
+library(pacman)
+pacman::p_load(tidyverse, huxtable, fixest, urca)
+```
+
+## Task 2
+## Task 3
+```{r}
+ts_data <- read.csv(file= "data/ts_data.csv", header = TRUE)
+library(pacman)
+pacman::p_load(tidyverse, urca)
+ts_data <- ts_data %>% mutate(Year = as.Date(Year, format = "%Y-%m-%d"))
+ts_data <- ts_data %>% dplyr::filter(Year >= as.Date("1985-01-01"), Year <= as.Date("2010-01-01"), Country == "France")
+pacman::p_load(stats)
+
+ts_data <- ts_data %>% arrange(Year)
+pacman::p_load(urca)
+test_vector <- ts_data %>% pull(ln_consump_pc)
+my_ADF1 <- ur.df(y=test_vector,type="trend",lags= 5,selectlags = "AIC")
+summary(my_ADF1)
+
+```
+
+##Task 4
+
+```{r}
+cs_data <- read.csv(file= "data/cs_data.csv", header = TRUE)
+
+```
+

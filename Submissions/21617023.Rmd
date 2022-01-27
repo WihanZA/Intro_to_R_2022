@@ -1,0 +1,42 @@
+---
+title: "21617023"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.height = 3.5, fig.width = 6)
+library(pacman)
+pacman::p_load(tidyverse, huxtable, fixest, urca)
+
+p_load(knitr, update = T)
+```
+
+## Task 3
+
+```{r task_3}
+energy_df <- read.csv(file = "data/ts_data.csv", header = TRUE) 
+energy_df <- energy_df %>% mutate(Year = as.Date(Year, format = "%Y-%m-%d")) 
+france_energy_df <- energy_df %>% dplyr::filter(Country == "France") %>% 
+  dplyr::filter(Year >= as.Date("1985-01-01"), Year <= as.Date ("2010-01-01"))
+
+energy_df <- energy_df %>% arrange(Year)
+test_vector <- energy_df %>% pull(ln_consump_pc)
+my_ADF1 <- ur.df(
+y = test_vector, # vector
+type = "trend", # type of ADF - trend + constant
+lags = 5, # max lags
+selectlags = "AIC" # lag selection criteria
+)
+# use Base-R's summary() to present ADF object
+summary(my_ADF1)
+```
+
+
+## Task 4
+```{r task_4}
+treat_df <- read.csv(file = "data/cs_data.csv", header = TRUE) 
+model1 <- feols(wage ~ x1, data = treat_df)
+model2 <- feols(wage ~ x1 + x2, data = treat_df)
+model3 <- feols(wage ~ x1 + x2 + treat, data = treat_df)
+huxreg(model1, model2, model3)
+```
